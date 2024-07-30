@@ -1,0 +1,50 @@
+import 'package:fluchutter/components/login.dart';
+import 'package:fluchutter/models/app_navigation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:fluchutter/models/user_details.dart';
+
+final GlobalKey<NavigatorState> navigatorKey=GlobalKey<NavigatorState>();
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+
+
+  @override
+  Widget build(BuildContext context) {
+    
+    return MultiProvider(providers: [
+      ChangeNotifierProvider(
+      create: (context) => UserDetails()),
+      ChangeNotifierProvider(create: (context) => appNavigation())
+    ],
+    child: MaterialApp(home: FrontPage(),navigatorKey: navigatorKey )
+    ); 
+  }
+}
+
+class FrontPage extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+
+   return WidgetsApp(
+    color: Color.fromARGB(255, 163, 107, 126),
+    builder: (context,_){
+      appNavigation nav=context.watch<appNavigation>();
+      if (nav.nav['frontpage']=='login/register') {
+        return Login();
+      }
+      else if (nav.nav['frontpage']=='chat') {
+        return Login();
+      }
+      else{
+        return Login();
+      }
+    }
+    ); 
+  }
+}
