@@ -8,5 +8,6 @@ class appNavigation with ChangeNotifier {
   Map<String,String> get nav => _nav;
   void setfrontpage(String pagename){
       _nav['frontpage']=pagename;
+      notifyListeners();
   }
 }

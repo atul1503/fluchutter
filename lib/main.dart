@@ -1,5 +1,7 @@
+import 'package:fluchutter/components/chat.dart';
 import 'package:fluchutter/components/login.dart';
 import 'package:fluchutter/models/app_navigation.dart';
+import 'package:fluchutter/models/messages.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fluchutter/models/user_details.dart';
@@ -19,9 +21,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(providers: [
       ChangeNotifierProvider(
       create: (context) => UserDetails()),
-      ChangeNotifierProvider(create: (context) => appNavigation())
+      ChangeNotifierProvider(create: (context) => appNavigation()),
+      ChangeNotifierProvider(create: (context)=> Messages())
     ],
-    child: MaterialApp(home: FrontPage(),navigatorKey: navigatorKey )
+    child: MaterialApp(home: FrontPage(),navigatorKey: navigatorKey 
+)
     ); 
   }
 }
@@ -30,21 +34,19 @@ class FrontPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-   return WidgetsApp(
-    color: Color.fromARGB(255, 163, 107, 126),
-    builder: (context,_){
+ 
+    return Scaffold(body: Builder( builder: (context){
       appNavigation nav=context.watch<appNavigation>();
       if (nav.nav['frontpage']=='login/register') {
         return Login();
       }
       else if (nav.nav['frontpage']=='chat') {
-        return Login();
+        return Chat();
       }
       else{
         return Login();
       }
     }
-    ); 
+    ));
+    }
   }
-}

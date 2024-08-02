@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/user_details.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluchutter/models/messages.dart';
 import 'package:flutter/material.dart';
@@ -11,34 +13,45 @@ import 'package:provider/provider.dart';
 class Chat extends StatefulWidget {
 
   @override
-  State<StatefulWidget> createState() => _ChatState();
+  State<Chat> createState() => _ChatState();
 }
 
-class _ChatState extends State<StatefulWidget> {
-  var messages=[];
+class _ChatState extends State<Chat> {
+  List<dynamic> messages=[];
   List<Message> messageWidgets=[];
+
+  void setMessages(List<dynamic> _message){
+    setState(() {
+      messages=_message;
+    });
+  }
+
+  void addMsgWidgets(Message widgets){
+    setState(() {
+      messageWidgets.add(widgets);
+    });
+  }
 
   @override
   void initState() {
-    final BuildContext? ctx=navigatorKey.currentContext;
-    if(ctx==null){return;}
-    String? username=ctx.watch<UserDetails>().userdetails['username'];
-    http.get(Uri.parse('http://localhost:8080/messages/getlatestfromfriends?username=$username'))
-    .then((response){
-      messages=jsonDecode(response.body);
-    });
     super.initState();
+    final BuildContext ctx=navigatorKey.currentContext as BuildContext;
+
+    String? username=ctx.watch<UserDetails>().userdetails['username'];
+    http.get(Uri.parse('http://localhost:8080/messages/getlatestfromfriends?username=$username'),headers: {'credentials': 'include'})
+    .then((response){
+      setMessages(jsonDecode(response.body));
+      ctx.read<Messages>().moveMessages(jsonDecode(response.body));
+    });
   }
   
 
   @override
   Widget build(BuildContext context) {
-    messages.map((item){
-      messageWidgets.add(Message(messageId: item['messageId']));
-    });
-    return Row(
-        children: messageWidgets,
-      );
+    for(int i=0;i<messages.length;i++){
+      addMsgWidgets(Message(messageId: messages[i]['messageId'].toString()));
+    }
+    return Column(children: messageWidgets,);
   }
 
 
@@ -53,66 +66,59 @@ class Message extends StatefulWidget {
 }
 
 class _MessageState extends State<Message> {
-  bool isUserMessage=false;
-  late Future<bool> gotImage;
-  String _messageid="";
+  
+  String messageid="";
+  String username="";
+  Map<String,dynamic> message={};
+  late Uint8List photobytes;
+
+  void setmessage(Map<String,dynamic> msg){
+    setState(() {
+      message=msg;
+    });
+  }
+
+  void setmessageid(String id){
+    setState(() {
+      messageid=id;
+    });
+  }
+
+  void setusername(String name){
+    setState(() {
+      username=name;
+    });
+  }
+
   @override
-  void initState() {
-    _messageid=widget.messageId;
+  void initState(){
     super.initState();
+    setmessageid(widget.messageId);
+    BuildContext ctx=navigatorKey.currentContext as BuildContext;
+    setusername(ctx.watch<UserDetails>().userdetails['username'] as String);
+    List<dynamic> messages=ctx.watch<Messages>().messages;
+    for(int i=0;i<messages.length;i++){
+      if(messages[i]['messageId'].toString()==messageid){
+        setmessage(messages[i]);
+      }
+    }
+    if(message['msgcontent']['type']!='text'){
+      http.get(Uri.parse('http://localhost:8080/messages/image?image_name=${message['msgcontent']['photourl']}'))
+      .then((response){
+          setState(() {
+            photobytes=response.bodyBytes;
+          });
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    Map<String,dynamic> message={};
-    List<Map<String,dynamic>> messages=context.watch<Messages>().messages;
-    String username=context.watch<String>();
-    messages.forEach((messageitem){
-      if(messageitem['messageId']==_messageid){
-        message=messageitem;
-      }
-    });
-
-    if(message['msgcontent']['type']=='text'){
-      if(username==message['sender']['username']) {
-          return Container(
-            alignment: Alignment.centerRight,
-            child: Row(children: [
-              Text('${message['msgcontent']['text']}'),
-              Text('${message['time']}',style: TextStyle(fontSize: 10)) 
-            ],
-            )
-          );
-      }
-      else{
-          return Container(
-            alignment: Alignment.centerLeft,
-            child: Row(children: [
-              Text('${message['msgcontent']['text']}'),
-              Text('${message['time']}',style: TextStyle(fontSize: 10)) 
-            ],
-            )
-          );
-      }
-    }
-    else{
-      String photoname=message['msgcontent']['photourl'];
-      http.get(Uri.parse('http://localhost:8080/messages/image?image_name=$photoname'))
-      .then((response){
-        message['photobyte']=response.body;
-        gotImage=Future.value(true);
-      });
-      return FutureBuilder(future: gotImage, builder: (context,snapshot){
-        if(snapshot.connectionState==ConnectionState.waiting){
-          return Center(child: CircularProgressIndicator());
-        }
-        else{
-          return Row(children: [
-              Image.memory(base64Decode(message['photobyte'])),
-              Text('${message['time']}',style: TextStyle(fontSize: 10))
-            ],);
-        }
-      });
-    }
+    return Container(
+      child: Column(children: [
+        message['msgcontent']['type']=='text'?Text(message['msgcontent']['text']):Image.memory(photobytes),
+        Text(message['time'])
+      ],)
+    );
   }
 }
