@@ -16,7 +16,7 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   List<dynamic> messages=[];
-  List<Message> messageWidgets=[];
+  List<Expanded> messageWidgets=[];
 
   void setMessages(List<dynamic> _message){
     setState(() {
@@ -26,7 +26,7 @@ class _ChatState extends State<Chat> {
 
   void addMsgWidgets(Message widgets){
     setState(() {
-      messageWidgets.add(widgets);
+      messageWidgets.add(Expanded(child: widgets ));
     });
   }
 
