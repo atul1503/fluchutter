@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/foundation.dart';
@@ -49,7 +47,7 @@ class _ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     for(int i=0;i<messages.length;i++){
-      addMsgWidgets(Message(messageId: messages[i]['messageId'].toString()));
+      addMsgWidgets(Message(messageId: messages[i]['messageId'].toString(),preview: true));
     }
     return Column(children: messageWidgets,);
   }
@@ -60,7 +58,8 @@ class _ChatState extends State<Chat> {
 class Message extends StatefulWidget {
 
   final String messageId;
-  Message({required this.messageId});
+  final bool preview;
+  Message({required this.messageId,required this.preview});
   @override
   State<Message> createState() => _MessageState();
 }
@@ -69,6 +68,7 @@ class _MessageState extends State<Message> {
   
   String messageid="";
   String username="";
+  bool preview=false;
   Map<String,dynamic> message={};
   late Uint8List photobytes;
 
@@ -94,6 +94,7 @@ class _MessageState extends State<Message> {
   void initState(){
     super.initState();
     setmessageid(widget.messageId);
+    preview=widget.preview;
     BuildContext ctx=navigatorKey.currentContext as BuildContext;
     setusername(ctx.watch<UserDetails>().userdetails['username'] as String);
     List<dynamic> messages=ctx.watch<Messages>().messages;
@@ -110,13 +111,42 @@ class _MessageState extends State<Message> {
           });
       });
     }
+    var nmsg=message;
+      String datestring=nmsg['time'];
+      DateTime datetime=DateTime.parse(datestring);
+      DateTime current_time=DateTime.now();
+      Duration diff=current_time.difference(datetime);
+      String humantimediff='';
+      if(diff.inDays>0){
+        humantimediff=diff.inDays.toString()+ " days ";
+      }
+      if(diff.inHours>0){
+        humantimediff = humantimediff + (diff. inHours%24). toString()+ " hours ";
+      }
+      if(diff.inMinutes>0){
+        humantimediff = humantimediff + (diff. inMinutes%60) .toString()+ " minutes ";
+      }
+      if(diff. inSeconds>0){
+        humantimediff = humantimediff + (diff. inSeconds%60). toString()+ " seconds ago ";
+      }
+      if(diff.inDays==0 && diff.inHours ==0 && diff.inMinutes ==0 && diff.inSeconds>0){
+        humantimediff="just moments ago";
+      }
+      nmsg['time']=humantimediff;
+    setState(() {
+      message=nmsg;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      alignment: Alignment.centerRight,
+      height: 1000,
+      width: 1000,
       child: Column(children: [
-        message['msgcontent']['type']=='text'?Text(message['msgcontent']['text']):Image.memory(photobytes),
+        preview?(message['sender']['username']==username?Text("You said: "):Text(message['sender']['username']+" said: ")):Text(""),
+        message['msgcontent']['type']=='text'?Text(message['msgcontent']['text']):(preview?Text("(image)"):Image.memory(photobytes)),
         Text(message['time'])
       ],)
     );
