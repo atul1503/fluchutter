@@ -46,7 +46,9 @@ class _ChatState extends State<Chat> {
 
   @override
   Widget build(BuildContext context) {
+    var unique_chats=[];
     for(int i=0;i<messages.length;i++){
+      
       addMsgWidgets(Message(messageId: messages[i]['messageId'].toString(),preview: true));
     }
     return Column(children: messageWidgets,);
@@ -142,8 +144,6 @@ class _MessageState extends State<Message> {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.centerRight,
-      height: 1000,
-      width: 1000,
       child: Column(children: [
         preview?(message['sender']['username']==username?Text("You said: "):Text(message['sender']['username']+" said: ")):Text(""),
         message['msgcontent']['type']=='text'?Text(message['msgcontent']['text']):(preview?Text("(image)"):Image.memory(photobytes)),

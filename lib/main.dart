@@ -1,4 +1,5 @@
 import 'package:fluchutter/components/chat.dart';
+import 'package:fluchutter/components/chatter.dart';
 import 'package:fluchutter/components/login.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/messages.dart';
@@ -41,7 +42,7 @@ class FrontPage extends StatelessWidget {
         return Login();
       }
       else if (nav.nav['frontpage']=='chat') {
-        return Chat();
+        return Chatter();
       }
       else{
         return Login();

@@ -77,19 +77,22 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-        return Container(
+        return Center(child: Container(
+          margin: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height*0.2,horizontal: MediaQuery.of(context).size.width*0.2),
           color: Colors.white,
-          child: Column(children: 
+          child: Center(child: Column(children: 
           [
             TextField(
               decoration: InputDecoration(labelText: "Enter your username:" ),
               controller: username_controller,
-            )
-          , TextField(decoration: InputDecoration(labelText: "Enter your password"), controller: password_controller),
+            ),
+          TextField(decoration: InputDecoration(labelText: "Enter your password"), controller: password_controller),
+          SizedBox(height: MediaQuery.of(context).size.height*0.04,),
           ElevatedButton(onPressed: () {attempt_login(context);}, child: Text('Sign in')),
+          SizedBox(height: MediaQuery.of(context).size.height*0.02,),
           ElevatedButton(onPressed: attempt_signup, child: Text('Sign up')),
           attempted_login?(login_status?Text("Login is a success!"):Text("Login has failed. Either credentials are wrong.")):Text("")
-          ]),
-        );
+          ])),
+        ));
       }
 }
