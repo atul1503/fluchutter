@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:fluchutter/main.dart';
+import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +25,7 @@ class _ChatState extends State<Chat> {
     });
   }
 
-  void addMsgWidgets(Message widgets){
+  void addMsgWidgets(InkWell widgets){
     setState(() {
       messageWidgets.add(Expanded(child: widgets ));
     });
@@ -44,24 +45,41 @@ class _ChatState extends State<Chat> {
   }
   
 
-  @override
-  Widget build(BuildContext context) {
-    var unique_chats=[];
-    for(int i=0;i<messages.length;i++){
-      
-      addMsgWidgets(Message(messageId: messages[i]['messageId'].toString(),preview: true));
-    }
-    return Column(children: messageWidgets,);
+  void changePersonChat(BuildContext ctx,String friend_username ){
+    var personal_messages=ctx.read<PersonalMessages>();
+    String? username=ctx.read<UserDetails>().userdetails['username'];
+    http.get(Uri.parse("http://localhost:8080/messages/latest?userone=${friend_username}&usertwo=${username}"))
+    .then((response) {
+        personal_messages.setmessages(jsonDecode(response.body));
+    });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    for(int i=0;i<messages.length;i++){
+      String? username=context.watch<UserDetails>().userdetails['username'];
+      var friend;
+      if(messages[i]['sender']['username']==username){
+        friend=messages[i]['receiver']['username'];
+      }
+      else{
+        friend=messages[i]['sender']['username'];
+      }
+      addMsgWidgets(InkWell(onTap: () => changePersonChat(context,friend) , child: Column( children: [
+        Text(friend),
+        Message(key: ValueKey(messages[i]['messageId'].toString()) , messageId: messages[i]['messageId'].toString(),preview: true)])));
+      }
+    return Column(children: messageWidgets);
+    }
+  }
+  
 
-}
 
 class Message extends StatefulWidget {
 
   final String messageId;
   final bool preview;
-  Message({required this.messageId,required this.preview});
+  Message({required this.messageId,required this.preview, required Key key}): super(key: key);
   @override
   State<Message> createState() => _MessageState();
 }
@@ -100,11 +118,18 @@ class _MessageState extends State<Message> {
     BuildContext ctx=navigatorKey.currentContext as BuildContext;
     setusername(ctx.watch<UserDetails>().userdetails['username'] as String);
     List<dynamic> messages=ctx.watch<Messages>().messages;
+    List<dynamic> personal_messages=ctx.watch<PersonalMessages>().personal_messages;
     for(int i=0;i<messages.length;i++){
       if(messages[i]['messageId'].toString()==messageid){
         setmessage(messages[i]);
       }
     }
+    for(int i=0;i<personal_messages.length;i++){
+      if(personal_messages[i]['messageId'].toString()==messageid){
+        setmessage(personal_messages[i]);
+      }
+    }
+    
     if(message['msgcontent']['type']!='text'){
       http.get(Uri.parse('http://localhost:8080/messages/image?image_name=${message['msgcontent']['photourl']}'))
       .then((response){

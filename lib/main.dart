@@ -3,6 +3,7 @@ import 'package:fluchutter/components/chatter.dart';
 import 'package:fluchutter/components/login.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/messages.dart';
+import 'package:fluchutter/models/personal_messages.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fluchutter/models/user_details.dart';
@@ -23,7 +24,8 @@ class MyApp extends StatelessWidget {
       ChangeNotifierProvider(
       create: (context) => UserDetails()),
       ChangeNotifierProvider(create: (context) => appNavigation()),
-      ChangeNotifierProvider(create: (context)=> Messages())
+      ChangeNotifierProvider(create: (context)=> Messages()),
+      ChangeNotifierProvider(create: (context)=> PersonalMessages())
     ],
     child: MaterialApp(home: FrontPage(),navigatorKey: navigatorKey 
 )
