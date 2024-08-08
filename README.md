@@ -1,16 +1,3 @@
-# fluchutter
+key is very important if you are handling multiple widgets of the same type, only the key can help flutter distinguish between each other.
+if there is supposed to be only one widget of a type then no need to use keys. when key changes, new widgets of that type are created and old ones may be deleted if they are standing in place of the new widgets that are supposed to be made in the tree.
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
