@@ -16,17 +16,13 @@ class OneToOneChatState extends State<OneToOneChat> {
   List<Map<String,dynamic>> messages=[];
 
   @override
-  void initState() {
-    final BuildContext ctx=navigatorKey.currentContext as BuildContext;
-
-    
-  }
-
-  @override
   Widget build(BuildContext context) {
      List<dynamic> messages=context.watch<PersonalMessages>().personal_messages;
+     messages.sort((a,b)=>
+        (a['time'] as String).compareTo(b['time'] as String)
+     );
     return Column(
-      children: [for (var message in messages)  Expanded(child: Message(key: ValueKey(message['messageId'].toString()),  messageId: message['messageId'].toString(), preview: false))],
+      children: [for (var message in messages)  Expanded(child: Message(key: ValueKey(message['messageId'].toString()),  messageId: message['messageId'].toString(), preview: false,chatroot: false,))],
     );
   }
 }
