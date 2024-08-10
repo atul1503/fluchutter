@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:ui';
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
@@ -58,25 +58,29 @@ class _ChatState extends State<Chat> {
 
   @override
   Widget build(BuildContext context) {
-    for (int i = 0; i < messages.length; i++) {
-      String? username = context.watch<UserDetails>().userdetails['username'];
-      var friend;
-      if (messages[i]['sender']['username'] == username) {
-        friend = messages[i]['receiver']['username'];
-      } else {
-        friend = messages[i]['sender']['username'];
-      }
-      addMsgWidgets(InkWell(
-          onTap: () => changePersonChat(context, friend),
-          child: Column(children: [
-            Message(
+    String? username = context.watch<UserDetails>().userdetails['username'];
+    return ListView.builder(
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        var item = messages[index];
+        var friend;
+        if (messages[index]['sender']['username'] == username) {
+          friend = messages[index]['receiver']['username'];
+        } else {
+          friend = messages[index]['sender']['username'];
+        }
+        return ListTile(
+          title: InkWell(
+            onTap: () => changePersonChat(context, friend),
+            child: Message(
                 chatroot: true,
-                key: ValueKey(messages[i]['messageId'].toString()),
-                messageId: messages[i]['messageId'].toString(),
-                preview: true)
-          ])));
-    }
-    return Column(children: messageWidgets);
+                key: ValueKey(item['messageId'].toString()),
+                messageId: item['messageId'].toString(),
+                preview: true),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -100,7 +104,7 @@ class _MessageState extends State<Message> {
   bool preview = false;
   bool chatroot = false;
   Map<String, dynamic> message = {};
-  late Uint8List photobytes;
+  Uint8List photobytes = Uint8List.fromList([0, 0, 0, 0]);
 
   void setmessage(Map<String, dynamic> msg) {
     setState(() {
@@ -187,6 +191,7 @@ class _MessageState extends State<Message> {
 
   @override
   Widget build(BuildContext context) {
+    var screensize = MediaQuery.of(context).size;
     return Container(
       alignment: chatroot == false
           ? message['sender']['username'] == username
@@ -194,6 +199,10 @@ class _MessageState extends State<Message> {
               : Alignment.centerLeft
           : Alignment.center,
       child: Column(
+        crossAxisAlignment:
+            chatroot || message['sender']['username'] == username
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
         children: [
           chatroot
               ? (message['sender']['username'] == username
@@ -201,8 +210,8 @@ class _MessageState extends State<Message> {
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 20))
                   : Text(message['sender']['username'],
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 20)))
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20)))
               : Text(""),
           chatroot == false
               ? (message['sender']['username'] == username
@@ -219,7 +228,9 @@ class _MessageState extends State<Message> {
               ? Text(message['msgcontent']['text'])
               : preview
                   ? const Text("(image)")
-                  : Expanded(child: Image.memory(photobytes)),
+                  : Container(
+                      width: screensize.width * 0.3,
+                      child: Image.memory(photobytes)),
           Text(message['time']),
         ],
       ),
