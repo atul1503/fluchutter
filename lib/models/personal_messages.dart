@@ -5,6 +5,13 @@ class PersonalMessages with ChangeNotifier {
   
   List<dynamic> get personal_messages => _messages;
 
+  String friend='';
+
+  void setFriend(String _friend){
+    friend=_friend;
+    notifyListeners();
+  }
+
   void addMessage(Map<String,String> msg){
     _messages.add(msg);
     notifyListeners();

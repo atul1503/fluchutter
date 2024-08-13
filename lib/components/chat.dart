@@ -53,6 +53,7 @@ class _ChatState extends State<Chat> {
             "http://localhost:8080/messages/latest?userone=${friend_username}&usertwo=${username}"))
         .then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
+      personal_messages.setFriend(friend_username);
     });
   }
 
@@ -228,9 +229,7 @@ class _MessageState extends State<Message> {
               ? Text(message['msgcontent']['text'])
               : preview
                   ? const Text("(image)")
-                  : Container(
-                      width: screensize.width * 0.3,
-                      child: Image.memory(photobytes)),
+                  : Container(width: screensize.width*0.3,child: Image.memory(photobytes,fit: BoxFit.cover,)),
           Text(message['time']),
         ],
       ),
