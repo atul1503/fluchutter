@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fluchutter/components/chat.dart';
 import 'package:fluchutter/main.dart';
@@ -25,6 +23,8 @@ class OneToOneChatState extends State<OneToOneChat> {
     var screensize = MediaQuery.of(context).size;
     List<dynamic> messages =
         context.watch<PersonalMessages>().personal_messages;
+    String friend=context.watch<PersonalMessages>().friend;
+
     messages
         .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
     return Stack(children: [
@@ -34,7 +34,7 @@ class OneToOneChatState extends State<OneToOneChat> {
         itemBuilder: (context, index) {
           var message = messages[index];
           return ListTile(
-            title: Message(
+            title:Message(
               key: ValueKey(message['messageId'].toString()),
               messageId: message['messageId'].toString(),
               preview: false,
@@ -43,7 +43,14 @@ class OneToOneChatState extends State<OneToOneChat> {
           );
         },
       ),
-      Positioned(child: MessageInput())
+      Positioned(child: MessageInput()),
+      Positioned(
+        child: Container(
+          color: Colors.white,
+          height: screensize.height*0.05,
+          width: screensize.width*0.7,
+          child: Center(child: Text(friend,style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 25))))),
     ]);
   }
 }
@@ -77,7 +84,6 @@ class _MessageInputState extends State<MessageInput> {
       showDialog(
           context: context,
           builder: (BuildContext ctx) {
-            var friend = ctx.read<PersonalMessages>().friend;
             return AlertDialog(
               title: Text("No image picked"),
               actions: [
