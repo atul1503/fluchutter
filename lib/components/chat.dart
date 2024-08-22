@@ -61,38 +61,41 @@ class _ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     String? username = context.watch<UserDetails>().userdetails['username'];
-    var screensize=MediaQuery.of(context).size;
+    var screensize = MediaQuery.of(context).size;
 
     return Stack(
       children: [
         ListView.builder(
-        itemCount: messages.length,
-        itemBuilder: (context, index) {
-          var item = messages[index];
-          var friend;
-          if (messages[index]['sender']['username'] == username) {
-            friend = messages[index]['receiver']['username'];
-          } else {
-            friend = messages[index]['sender']['username'];
-          }
-          return ListTile(
-            title: InkWell(
-              onTap: () => changePersonChat(context, friend),
-              child: Message(
-                  chatroot: true,
-                  key: ValueKey(item['messageId'].toString()),
-                  messageId: item['messageId'].toString(),
-                  preview: true),
-            ),
-          );
-        },
-      ),
-      Positioned(
-        bottom: screensize.height*0.05,
-        right: screensize.width*0.02,
-        child: ElevatedButton(child: Icon(Icons.add),onPressed: (){
-          print("hi");
-      },))
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            var item = messages[index];
+            var friend;
+            if (messages[index]['sender']['username'] == username) {
+              friend = messages[index]['receiver']['username'];
+            } else {
+              friend = messages[index]['sender']['username'];
+            }
+            return ListTile(
+              title: InkWell(
+                onTap: () => changePersonChat(context, friend),
+                child: Message(
+                    chatroot: true,
+                    key: ValueKey(item['messageId'].toString()),
+                    messageId: item['messageId'].toString(),
+                    preview: true),
+              ),
+            );
+          },
+        ),
+        Positioned(
+            bottom: screensize.height * 0.05,
+            right: screensize.width * 0.02,
+            child: ElevatedButton(
+              child: Icon(Icons.add),
+              onPressed: () {
+                print("hi");
+              },
+            ))
       ],
     );
   }
@@ -119,6 +122,14 @@ class _MessageState extends State<Message> {
   bool chatroot = false;
   Map<String, dynamic> message = {};
   Uint8List photobytes = Uint8List.fromList([0, 0, 0, 0]);
+
+  bool compareUint8Lists(Uint8List a, Uint8List b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   void setmessage(Map<String, dynamic> msg) {
     setState(() {
@@ -197,7 +208,7 @@ class _MessageState extends State<Message> {
         diff.inSeconds > 0) {
       humantimediff = "just moments ago";
     }
-    nmsg['time'] = humantimediff;
+    nmsg['chatformattime'] = humantimediff;
     setState(() {
       message = nmsg;
     });
@@ -244,11 +255,14 @@ class _MessageState extends State<Message> {
                   ? const Text("(image)")
                   : Container(
                       width: screensize.width * 0.3,
-                      child: Image.memory(
-                        photobytes,
-                        fit: BoxFit.cover,
-                      )),
-          Text(message['time']),
+                      child: compareUint8Lists(
+                              photobytes, Uint8List.fromList([0, 0, 0, 0]))
+                          ? Text("")
+                          : Image.memory(
+                              photobytes,
+                              fit: BoxFit.cover,
+                            )),
+          Text(message['chatformattime']),
         ],
       ),
     );
