@@ -29,6 +29,7 @@ class OneToOneChatState extends State<OneToOneChat> {
         .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
     return Stack(children: [
       ListView.builder(
+        padding: EdgeInsets.only(bottom: 100),
         itemCount: messages.length,
         itemBuilder: (context, index) {
           var message = messages[index];
@@ -53,20 +54,19 @@ class MessageInput extends StatefulWidget {
 
 class _MessageInputState extends State<MessageInput> {
   XFile? image;
-  String image_name="";
+  String image_name = "";
   ImagePicker picker = ImagePicker();
   String upload_response = "";
-  TextEditingController messageController=TextEditingController();
+  TextEditingController messageController = TextEditingController();
 
   void pickImage(BuildContext ctx) {
     picker.pickImage(source: ImageSource.gallery).then((picketFile) {
       if (picketFile != null) {
-          setState(() {
-            image_name=picketFile.name;
-            image=picketFile;
-          });
-        }
-      else {
+        setState(() {
+          image_name = picketFile.name;
+          image = picketFile;
+        });
+      } else {
         print("No filed picked..");
       }
     });
@@ -89,7 +89,6 @@ class _MessageInputState extends State<MessageInput> {
           });
     }
 
-    
     //upload image
     BuildContext ctx = navigatorKey.currentContext as BuildContext;
     var friend = ctx.read<PersonalMessages>().friend;
@@ -98,7 +97,10 @@ class _MessageInputState extends State<MessageInput> {
     var request = http.MultipartRequest('POST', uri);
     request.fields['recid'] = friend;
     request.fields['senderid'] = username;
-    request.files.add(await http.MultipartFile.fromBytes('image',await image!.readAsBytes(),filename: image_name,contentType: MediaType('image', image_name.split(".")[1])));
+    request.files.add(await http.MultipartFile.fromBytes(
+        'image', await image!.readAsBytes(),
+        filename: image_name,
+        contentType: MediaType('image', image_name.split(".")[1])));
 
     request.send().then((response) async {
       http.Response.fromStream(response).then((final_response) {
@@ -110,14 +112,19 @@ class _MessageInputState extends State<MessageInput> {
                 return AlertDialog(
                   title: Text(upload_response),
                   actions: [
-                    TextButton(onPressed: (){Navigator.of(ctx).pop();}, child: Text("Dismiss"))
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text("Dismiss"))
                   ],
                 );
               });
-          if(final_response.statusCode==200){
-              Uri uri=Uri.parse("http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
-        var response= await http.get(uri);
-        ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+          if (final_response.statusCode == 200) {
+            Uri uri = Uri.parse(
+                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
+            var response = await http.get(uri);
+            ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
           }
         });
       });
@@ -125,15 +132,17 @@ class _MessageInputState extends State<MessageInput> {
   }
 
   void sendMessage(BuildContext ctx) async {
-      var friend=ctx.read<PersonalMessages>().friend;
-      var username=ctx.read<UserDetails>().userdetails['username'];
-      var response=await http.post(Uri.parse("http://localhost:8080/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"));
-      if(response.statusCode==200){
-        var username=ctx.read<UserDetails>().userdetails['username'];
-        Uri uri=Uri.parse("http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
-        var response=await http.get(uri);
-        ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
-      }
+    var friend = ctx.read<PersonalMessages>().friend;
+    var username = ctx.read<UserDetails>().userdetails['username'];
+    var response = await http.post(Uri.parse(
+        "http://localhost:8080/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"));
+    if (response.statusCode == 200) {
+      var username = ctx.read<UserDetails>().userdetails['username'];
+      Uri uri = Uri.parse(
+          "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
+      var response = await http.get(uri);
+      ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+    }
   }
 
   @override
@@ -141,6 +150,14 @@ class _MessageInputState extends State<MessageInput> {
     var screensize = MediaQuery.of(context).size;
     return Stack(
       children: [
+        Positioned(
+            top: screensize.height*0.95,
+            child: Container(
+              width: screensize.width*0.7,
+              height: screensize.height*0.1,
+              color: Colors.white,
+
+            )),
         Positioned(
             width: screensize.width * 0.6,
             bottom: 0,

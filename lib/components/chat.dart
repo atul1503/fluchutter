@@ -4,6 +4,7 @@ import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluchutter/models/messages.dart';
 import 'package:flutter/material.dart';
@@ -60,27 +61,39 @@ class _ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     String? username = context.watch<UserDetails>().userdetails['username'];
-    return ListView.builder(
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-        var item = messages[index];
-        var friend;
-        if (messages[index]['sender']['username'] == username) {
-          friend = messages[index]['receiver']['username'];
-        } else {
-          friend = messages[index]['sender']['username'];
-        }
-        return ListTile(
-          title: InkWell(
-            onTap: () => changePersonChat(context, friend),
-            child: Message(
-                chatroot: true,
-                key: ValueKey(item['messageId'].toString()),
-                messageId: item['messageId'].toString(),
-                preview: true),
-          ),
-        );
-      },
+    var screensize=MediaQuery.of(context).size;
+
+    return Stack(
+      children: [
+        ListView.builder(
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          var item = messages[index];
+          var friend;
+          if (messages[index]['sender']['username'] == username) {
+            friend = messages[index]['receiver']['username'];
+          } else {
+            friend = messages[index]['sender']['username'];
+          }
+          return ListTile(
+            title: InkWell(
+              onTap: () => changePersonChat(context, friend),
+              child: Message(
+                  chatroot: true,
+                  key: ValueKey(item['messageId'].toString()),
+                  messageId: item['messageId'].toString(),
+                  preview: true),
+            ),
+          );
+        },
+      ),
+      Positioned(
+        bottom: screensize.height*0.05,
+        right: screensize.width*0.02,
+        child: ElevatedButton(child: Icon(Icons.add),onPressed: (){
+          print("hi");
+      },))
+      ],
     );
   }
 }
@@ -229,7 +242,12 @@ class _MessageState extends State<Message> {
               ? Text(message['msgcontent']['text'])
               : preview
                   ? const Text("(image)")
-                  : Container(width: screensize.width*0.3,child: Image.memory(photobytes,fit: BoxFit.cover,)),
+                  : Container(
+                      width: screensize.width * 0.3,
+                      child: Image.memory(
+                        photobytes,
+                        fit: BoxFit.cover,
+                      )),
           Text(message['time']),
         ],
       ),
