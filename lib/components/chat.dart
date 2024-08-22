@@ -176,10 +176,11 @@ class _MessageState extends State<Message> {
           .get(Uri.parse(
               'http://localhost:8080/messages/image?image_name=${message['msgcontent']['photourl']}'))
           .then((response) {
+        if(mounted) {
         setState(() {
           photobytes = response.bodyBytes;
         });
-      });
+      }});
     }
     var nmsg = message;
     String datestring = nmsg['time'];
