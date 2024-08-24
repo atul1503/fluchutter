@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:ui';
+import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
@@ -93,7 +93,9 @@ class _ChatState extends State<Chat> {
             child: ElevatedButton(
               child: Icon(Icons.add),
               onPressed: () {
-                print("hi");
+                
+                context.read<appNavigation>().setfrontpage('new_chat');
+
               },
             ))
       ],
