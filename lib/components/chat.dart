@@ -97,7 +97,17 @@ class _ChatState extends State<Chat> {
                 context.read<appNavigation>().setfrontpage('new_chat');
 
               },
-            ))
+            )),
+        Positioned(
+          bottom: screensize.height * 0.05,
+          left: screensize.width * 0.02,
+          child: ElevatedButton(onPressed: () {
+          context.read<appNavigation>().setfrontpage('login/register');
+          context.read<PersonalMessages>().setmessages([]);
+          context.read<Messages>().makeItEmpty();
+          context.read<PersonalMessages>().setFriend("");
+          context.read<UserDetails>().setusername('');
+        }, child: Icon(Icons.logout)))
       ],
     );
   }
