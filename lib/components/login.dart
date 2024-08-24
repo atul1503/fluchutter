@@ -66,11 +66,40 @@ class _LoginState extends State<Login> {
             setState(() {
               register_status=true;
             });
+
+            showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return AlertDialog(
+                  title: Text("Sign-up complete"),
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text("Dismiss"))
+                  ],
+                );
+              });
       }
       else{
         setState(() {
           register_status=false;
         });
+        showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return AlertDialog(
+                  title: Text("this user is already registered."),
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text("Dismiss"))
+                  ],
+                );
+              });
       }
     });
   }
