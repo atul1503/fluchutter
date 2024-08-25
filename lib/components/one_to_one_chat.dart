@@ -5,6 +5,7 @@ import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -16,18 +17,64 @@ class OneToOneChat extends StatefulWidget {
 }
 
 class OneToOneChatState extends State<OneToOneChat> {
-  List<Map<String, dynamic>> messages = [];
+  final BuildContext ctx = navigatorKey.currentContext as BuildContext;
+  bool get_new_old_flag=true;
+
+
+  void getOld(PointerEnterEvent e){
+    List<dynamic> messages=ctx.read<PersonalMessages>().personal_messages;
+    if(!get_new_old_flag){
+      return;
+    }
+    if(messages.length<1){
+      return;
+    }
+    var friend = ctx.read<PersonalMessages>().friend;
+    var username=ctx.read<UserDetails>().userdetails['username'];
+    Uri uri = Uri.parse(
+                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
+            http.get(uri).then((response){
+                ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+                setState(() {
+                  get_new_old_flag=false;
+                });
+            });
+
+  }
+
+  void getNew(PointerEnterEvent e){
+    List<dynamic> messages=ctx.read<PersonalMessages>().personal_messages;
+    if(!get_new_old_flag){
+      return;
+    }
+    if(messages.length<1){
+      return;
+    }
+    var friend = ctx.read<PersonalMessages>().friend;
+    var username=ctx.read<UserDetails>().userdetails['username'];
+    Uri uri = Uri.parse(
+                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length-1]['time']}");
+            http.get(uri).then((response){
+                ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+                setState(() {
+                  get_new_old_flag=false;
+                });
+            });
+
+  }
 
   @override
   Widget build(BuildContext context) {
     var screensize = MediaQuery.of(context).size;
-    List<dynamic> messages =
-        context.watch<PersonalMessages>().personal_messages;
+    List<dynamic> messages=context.watch<PersonalMessages>().personal_messages;
     String friend=context.watch<PersonalMessages>().friend;
 
     messages
         .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
     return Stack(children: [
+      SizedBox(
+        height: screensize.height*0.1,
+      ),
       ListView.builder(
         padding: EdgeInsets.only(bottom: 100),
         itemCount: messages.length,
@@ -43,6 +90,7 @@ class OneToOneChatState extends State<OneToOneChat> {
           );
         },
       ),
+      SizedBox(height: screensize.height*0.1,),
       Positioned(child: MessageInput()),
       Positioned(
         child: Container(
@@ -51,6 +99,12 @@ class OneToOneChatState extends State<OneToOneChat> {
           width: screensize.width*0.7,
           child: Center(child: Text(friend,style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 25))))),
+      Positioned(top: screensize.height*0.1 , child: MouseRegion(onEnter: getOld,onExit: (PointerExitEvent e){ setState(() {
+        get_new_old_flag=true;
+      });}, child: ElevatedButton(onPressed: (){},child: Icon(Icons.arrow_upward),))),
+      Positioned(bottom: screensize.height*0.1 ,child: MouseRegion(onEnter: getNew,onExit: (PointerExitEvent e){ setState(() {
+        get_new_old_flag=true;
+      });}, child: ElevatedButton(onPressed: (){},child: Icon(Icons.arrow_downward),)))      
     ]);
   }
 }
