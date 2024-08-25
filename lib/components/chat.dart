@@ -146,7 +146,7 @@ class _ChatState extends State<Chat> {
             )),
         Positioned(
             bottom: screensize.height * 0.05,
-            left: screensize.width * 0.02,
+            left: screensize.width * 0.1,
             child: ElevatedButton(
                 onPressed: () {
                   context.read<appNavigation>().setfrontpage('login/register');
@@ -158,26 +158,24 @@ class _ChatState extends State<Chat> {
                 child: Icon(Icons.logout))),
         Positioned(
             bottom: 0,
-            child: Container(
-                child: MouseRegion(
+            child: MouseRegion(
                     onEnter: getNew,
                     onExit: (PointerExitEvent e) {
                       setState() {
                         get_new_old_flag = true;
                       }
                     },
-                    child: Icon(Icons.arrow_downward)))),
+                    child: ElevatedButton(onPressed: (){}, child:Icon(Icons.arrow_downward)))),
         Positioned(
             top: 0,
-            child: Container(
-                child: MouseRegion(
+            child: MouseRegion(
                     onEnter: getOld,
                     onExit: (PointerExitEvent e) {
                       setState() {
                         get_new_old_flag = true;
                       }
                     },
-                    child: Icon(Icons.arrow_upward))))
+                    child: ElevatedButton(onPressed: (){}, child: Icon(Icons.arrow_upward))))
       ],
     );
   }
