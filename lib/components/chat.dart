@@ -16,8 +16,10 @@ class Chat extends StatefulWidget {
 }
 
 class _ChatState extends State<Chat> {
+  final BuildContext ctx = navigatorKey.currentContext as BuildContext;
   List<dynamic> messages = [];
   List<Expanded> messageWidgets = [];
+  bool get_new_old_flag = true;
 
   void setMessages(List<dynamic> _message) {
     setState(() {
@@ -34,15 +36,17 @@ class _ChatState extends State<Chat> {
   @override
   void initState() {
     super.initState();
-    final BuildContext ctx = navigatorKey.currentContext as BuildContext;
 
     String? username = ctx.watch<UserDetails>().userdetails['username'];
+
     http.get(
         Uri.parse(
             'http://localhost:8080/messages/getlatestfromfriends?username=$username'),
         headers: {'credentials': 'include'}).then((response) {
-      setMessages(jsonDecode(response.body));
-      ctx.read<Messages>().moveMessages(jsonDecode(response.body));
+      messages = jsonDecode(response.body);
+      messages.sort((a, b) => a['time'].compareTo(b['time']));
+      setMessages(messages);
+      ctx.read<Messages>().moveMessages(messages);
     });
   }
 
@@ -55,6 +59,50 @@ class _ChatState extends State<Chat> {
         .then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
       personal_messages.setFriend(friend_username);
+    });
+  }
+
+  void getOld(PointerEnterEvent) {
+    if (!get_new_old_flag) {
+      return;
+    }
+    if (messages.length < 1) {
+      return;
+    }
+    String? username = ctx.read<UserDetails>().userdetails['username'];
+    http.get(
+        Uri.parse(
+            'http://localhost:8080/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
+        headers: {'credentials': 'include'}).then((response) {
+      messages = jsonDecode(response.body);
+      messages.sort((a, b) => a['time'].compareTo(b['time']));
+      setMessages(messages);
+      ctx.read<Messages>().moveMessages(messages);
+      setState() {
+        get_new_old_flag = false;
+      }
+    });
+  }
+
+  void getNew(PointerEnterEvent e) {
+    if (!get_new_old_flag) {
+      return;
+    }
+    if (messages.length < 1) {
+      return;
+    }
+    String? username = ctx.read<UserDetails>().userdetails['username'];
+    http.get(
+        Uri.parse(
+            'http://localhost:8080/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
+        headers: {'credentials': 'include'}).then((response) {
+      messages = jsonDecode(response.body);
+      messages.sort((a, b) => a['time'].compareTo(b['time']));
+      setMessages(messages);
+      ctx.read<Messages>().moveMessages(messages);
+      setState() {
+        get_new_old_flag = false;
+      }
     });
   }
 
@@ -93,21 +141,43 @@ class _ChatState extends State<Chat> {
             child: ElevatedButton(
               child: Icon(Icons.add),
               onPressed: () {
-                
                 context.read<appNavigation>().setfrontpage('new_chat');
-
               },
             )),
         Positioned(
-          bottom: screensize.height * 0.05,
-          left: screensize.width * 0.02,
-          child: ElevatedButton(onPressed: () {
-          context.read<appNavigation>().setfrontpage('login/register');
-          context.read<PersonalMessages>().setmessages([]);
-          context.read<Messages>().makeItEmpty();
-          context.read<PersonalMessages>().setFriend("");
-          context.read<UserDetails>().setusername('');
-        }, child: Icon(Icons.logout)))
+            bottom: screensize.height * 0.05,
+            left: screensize.width * 0.02,
+            child: ElevatedButton(
+                onPressed: () {
+                  context.read<appNavigation>().setfrontpage('login/register');
+                  context.read<PersonalMessages>().setmessages([]);
+                  context.read<Messages>().makeItEmpty();
+                  context.read<PersonalMessages>().setFriend("");
+                  context.read<UserDetails>().setusername('');
+                },
+                child: Icon(Icons.logout))),
+        Positioned(
+            bottom: 0,
+            child: Container(
+                child: MouseRegion(
+                    onEnter: getNew,
+                    onExit: (PointerExitEvent e) {
+                      setState() {
+                        get_new_old_flag = true;
+                      }
+                    },
+                    child: Icon(Icons.arrow_downward)))),
+        Positioned(
+            top: 0,
+            child: Container(
+                child: MouseRegion(
+                    onEnter: getOld,
+                    onExit: (PointerExitEvent e) {
+                      setState() {
+                        get_new_old_flag = true;
+                      }
+                    },
+                    child: Icon(Icons.arrow_upward))))
       ],
     );
   }
@@ -188,11 +258,12 @@ class _MessageState extends State<Message> {
           .get(Uri.parse(
               'http://localhost:8080/messages/image?image_name=${message['msgcontent']['photourl']}'))
           .then((response) {
-        if(mounted) {
-        setState(() {
-          photobytes = response.bodyBytes;
-        });
-      }});
+        if (mounted) {
+          setState(() {
+            photobytes = response.bodyBytes;
+          });
+        }
+      });
     }
     var nmsg = message;
     String datestring = nmsg['time'];
