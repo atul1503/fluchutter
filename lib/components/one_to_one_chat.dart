@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fluchutter/components/chat.dart';
+import 'package:fluchutter/endpoint.dart';
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
@@ -32,7 +33,7 @@ class OneToOneChatState extends State<OneToOneChat> {
     var friend = ctx.read<PersonalMessages>().friend;
     var username=ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
-                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
+                "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
             http.get(uri).then((response){
                 ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
                 setState(() {
@@ -53,7 +54,7 @@ class OneToOneChatState extends State<OneToOneChat> {
     var friend = ctx.read<PersonalMessages>().friend;
     var username=ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
-                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length-1]['time']}");
+                "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length-1]['time']}");
             http.get(uri).then((response){
                 ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
                 setState(() {
@@ -153,7 +154,7 @@ class _MessageInputState extends State<MessageInput> {
     BuildContext ctx = navigatorKey.currentContext as BuildContext;
     var friend = ctx.read<PersonalMessages>().friend;
     var username = ctx.read<UserDetails>().userdetails['username'] as String;
-    final Uri uri = Uri.parse("http://localhost:8080/messages/create");
+    final Uri uri = Uri.parse("http://${endpoint_with_port}/messages/create");
     var request = http.MultipartRequest('POST', uri);
     request.fields['recid'] = friend;
     request.fields['senderid'] = username;
@@ -182,7 +183,7 @@ class _MessageInputState extends State<MessageInput> {
               });
           if (final_response.statusCode == 200) {
             Uri uri = Uri.parse(
-                "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
+                "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
             var response = await http.get(uri);
             ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
           }
@@ -195,11 +196,11 @@ class _MessageInputState extends State<MessageInput> {
     var friend = ctx.read<PersonalMessages>().friend;
     var username = ctx.read<UserDetails>().userdetails['username'];
     var response = await http.post(Uri.parse(
-        "http://localhost:8080/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"));
+        "http://${endpoint_with_port}/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"));
     if (response.statusCode == 200) {
       var username = ctx.read<UserDetails>().userdetails['username'];
       Uri uri = Uri.parse(
-          "http://localhost:8080/messages/latest?userone=${friend}&usertwo=${username}");
+          "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
       var response = await http.get(uri);
       ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
     }

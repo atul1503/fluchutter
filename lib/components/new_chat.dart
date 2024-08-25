@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fluchutter/endpoint.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +21,7 @@ class _NewChatState extends State<NewChat> {
     final String username =
         ctx.read<UserDetails>().userdetails['username'] as String;
     final Uri uri = Uri.parse(
-        "http://localhost:8080/messages/latest?userone=${newFriendUsernameController.text}&usertwo=${username}");
+        "http://${endpoint_with_port}/messages/latest?userone=${newFriendUsernameController.text}&usertwo=${username}");
     http.get(uri).then((response) {
       List<dynamic> data = jsonDecode(response.body);
       ctx.read<PersonalMessages>().setFriend(newFriendUsernameController.text);

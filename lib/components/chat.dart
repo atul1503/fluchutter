@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fluchutter/endpoint.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/main.dart';
 import 'package:fluchutter/models/personal_messages.dart';
@@ -41,7 +42,7 @@ class _ChatState extends State<Chat> {
 
     http.get(
         Uri.parse(
-            'http://localhost:8080/messages/getlatestfromfriends?username=$username'),
+            'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username'),
         headers: {'credentials': 'include'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
@@ -55,7 +56,7 @@ class _ChatState extends State<Chat> {
     String? username = ctx.read<UserDetails>().userdetails['username'];
     http
         .get(Uri.parse(
-            "http://localhost:8080/messages/latest?userone=${friend_username}&usertwo=${username}"))
+            "http://${endpoint_with_port}/messages/latest?userone=${friend_username}&usertwo=${username}"))
         .then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
       personal_messages.setFriend(friend_username);
@@ -72,7 +73,7 @@ class _ChatState extends State<Chat> {
     String? username = ctx.read<UserDetails>().userdetails['username'];
     http.get(
         Uri.parse(
-            'http://localhost:8080/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
+            'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
         headers: {'credentials': 'include'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
@@ -94,7 +95,7 @@ class _ChatState extends State<Chat> {
     String? username = ctx.read<UserDetails>().userdetails['username'];
     http.get(
         Uri.parse(
-            'http://localhost:8080/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
+            'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
         headers: {'credentials': 'include'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
@@ -254,7 +255,7 @@ class _MessageState extends State<Message> {
     if (message['msgcontent']['type'] != 'text') {
       http
           .get(Uri.parse(
-              'http://localhost:8080/messages/image?image_name=${message['msgcontent']['photourl']}'))
+              'http://${endpoint_with_port}/messages/image?image_name=${message['msgcontent']['photourl']}'))
           .then((response) {
         if (mounted) {
           setState(() {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fluchutter/endpoint.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ class _LoginState extends State<Login> {
   void attempt_login(BuildContext ctx) async {
     final String username=username_controller.text;
     final String password=password_controller.text;
-    http.post(Uri.parse("http://localhost:8080/users/login"),headers: {
+    http.post(Uri.parse("http://${endpoint_with_port}/users/login"),headers: {
         'Content-Type': 'application/json',
         'username': username,
         'password': password,
@@ -54,7 +55,7 @@ class _LoginState extends State<Login> {
   void attempt_signup() {
     final String username=username_controller.text;
     final String password=password_controller.text;
-    http.post(Uri.parse("http://localhost:8080/users/register"),headers: {
+    http.post(Uri.parse("http://${endpoint_with_port}/users/register"),headers: {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
