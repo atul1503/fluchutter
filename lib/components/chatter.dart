@@ -13,10 +13,10 @@ class Chatter extends StatelessWidget {
               decoration: BoxDecoration(
                   border:
                       Border(right: BorderSide(color: Colors.green, width: 3))),
-              width: screensize.width * 0.3,
+              width: screensize.width * 0.5,
               child: Chat()),
           Container(
-            width: screensize.width * 0.7,
+            width: screensize.width * 0.5,
             child: OneToOneChat(),
           )
         ]));

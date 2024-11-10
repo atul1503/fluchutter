@@ -18,6 +18,7 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   final BuildContext ctx = navigatorKey.currentContext as BuildContext;
+  String? username,token;
   List<dynamic> messages = [];
   List<Expanded> messageWidgets = [];
   bool get_new_old_flag = true;
@@ -25,6 +26,18 @@ class _ChatState extends State<Chat> {
   void setMessages(List<dynamic> _message) {
     setState(() {
       messages = _message;
+    });
+  }
+
+  void setUsername(String _username){
+    setState(() {
+      username=_username;
+    });
+  }
+
+  void setToken(String _token){
+    setState(() {
+      token=_token;
     });
   }
 
@@ -38,12 +51,13 @@ class _ChatState extends State<Chat> {
   void initState() {
     super.initState();
 
-    String? username = ctx.watch<UserDetails>().userdetails['username'];
+    setUsername(ctx.watch<UserDetails>().userdetails['username'] ?? '');
+    setToken(token = ctx.watch<UserDetails>().token);
 
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username'),
-        headers: {'credentials': 'include'}).then((response) {
+        headers: {'Authorization': 'Bearer $token'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
@@ -53,10 +67,11 @@ class _ChatState extends State<Chat> {
 
   void changePersonChat(BuildContext ctx, String friend_username) {
     var personal_messages = ctx.read<PersonalMessages>();
-    String? username = ctx.read<UserDetails>().userdetails['username'];
     http
         .get(Uri.parse(
-            "http://${endpoint_with_port}/messages/latest?userone=${friend_username}&usertwo=${username}"))
+            "http://${endpoint_with_port}/messages/latest?userone=${friend_username}&usertwo=${username}"),headers: {
+          'Authorization': 'Bearer $token'
+    })
         .then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
       personal_messages.setFriend(friend_username);
@@ -74,7 +89,9 @@ class _ChatState extends State<Chat> {
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
-        headers: {'credentials': 'include'}).then((response) {
+        headers: {
+    'Authorization': 'Bearer $token'
+    }).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
@@ -96,7 +113,9 @@ class _ChatState extends State<Chat> {
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
-        headers: {'credentials': 'include'}).then((response) {
+        headers: {
+    'Authorization': 'Bearer $token'
+    }).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
@@ -199,6 +218,7 @@ class Message extends StatefulWidget {
 class _MessageState extends State<Message> {
   String messageid = "";
   String username = "";
+  String token="";
   bool preview = false;
   bool chatroot = false;
   Map<String, dynamic> message = {};
@@ -238,6 +258,9 @@ class _MessageState extends State<Message> {
     chatroot = widget.chatroot;
     BuildContext ctx = navigatorKey.currentContext as BuildContext;
     setusername(ctx.watch<UserDetails>().userdetails['username'] as String);
+    setState(() {
+      token=ctx.watch<UserDetails>().token;
+    });
     List<dynamic> messages = ctx.watch<Messages>().messages;
     List<dynamic> personal_messages =
         ctx.watch<PersonalMessages>().personal_messages;
@@ -255,7 +278,9 @@ class _MessageState extends State<Message> {
     if (message['msgcontent']['type'] != 'text') {
       http
           .get(Uri.parse(
-              'http://${endpoint_with_port}/messages/image?image_name=${message['msgcontent']['photourl']}'))
+              'http://${endpoint_with_port}/messages/image?image_name=${message['msgcontent']['photourl']}'),headers: {
+        'Authorization': 'Bearer $token'
+      })
           .then((response) {
         if (mounted) {
           setState(() {

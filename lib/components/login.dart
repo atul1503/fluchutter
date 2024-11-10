@@ -25,19 +25,24 @@ class _LoginState extends State<Login> {
     final String username=username_controller.text;
     final String password=password_controller.text;
     http.post(Uri.parse("http://${endpoint_with_port}/users/login"),headers: {
-        'Content-Type': 'application/json',
-        'username': username,
-        'password': password,
-      },
-      )
+        'Content-Type': 'application/json'
+      },body: jsonEncode({
+      'username': username,
+      'password': password
+    }))
     .then((response) async {
-      if(response.statusCode==200){ 
+      if(response.statusCode==200){
+          //print("body:  ${response.body}");
             setState(() {
               login_status=true;
             });
+            var responseBody=jsonDecode(response.body);
             await Future.delayed(Duration(seconds: 3));
             ctx.read<UserDetails>().setusername(username);
             ctx.read<appNavigation>().setfrontpage("chat");
+            print("${responseBody['token']}");
+            ctx.read<UserDetails>().setToken(responseBody['token']);
+
       }
       else{
         setState(() {

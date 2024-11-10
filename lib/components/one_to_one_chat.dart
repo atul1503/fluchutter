@@ -20,7 +20,16 @@ class OneToOneChat extends StatefulWidget {
 class OneToOneChatState extends State<OneToOneChat> {
   final BuildContext ctx = navigatorKey.currentContext as BuildContext;
   bool get_new_old_flag=true;
+  String token="";
 
+
+  @override
+  void initState() {
+    setState(() {
+      token=ctx.watch<UserDetails>().token;
+    });
+    super.initState();
+  }
 
   void getOld(PointerEnterEvent e){
     List<dynamic> messages=ctx.read<PersonalMessages>().personal_messages;
@@ -34,7 +43,9 @@ class OneToOneChatState extends State<OneToOneChat> {
     var username=ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
                 "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
-            http.get(uri).then((response){
+            http.get(uri,headers: {
+              'Authorization': 'Bearer $token'
+            }).then((response){
                 ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
                 setState(() {
                   get_new_old_flag=false;
@@ -55,7 +66,9 @@ class OneToOneChatState extends State<OneToOneChat> {
     var username=ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
                 "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length-1]['time']}");
-            http.get(uri).then((response){
+            http.get(uri,headers: {
+              'Authorization': 'Bearer $token'
+            }).then((response){
                 ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
                 setState(() {
                   get_new_old_flag=false;
@@ -118,8 +131,20 @@ class _MessageInputState extends State<MessageInput> {
   XFile? image;
   String image_name = "";
   ImagePicker picker = ImagePicker();
+  String token="";
   String upload_response = "";
   TextEditingController messageController = TextEditingController();
+  final BuildContext ctx = navigatorKey.currentContext as BuildContext;
+
+
+  @override
+  void initState() {
+
+    setState(() {
+      token=ctx.watch<UserDetails>().token;
+    });
+    super.initState();
+  }
 
   void pickImage(BuildContext ctx) {
     picker.pickImage(source: ImageSource.gallery).then((picketFile) {
@@ -163,6 +188,7 @@ class _MessageInputState extends State<MessageInput> {
         filename: image_name,
         contentType: MediaType('image', image_name.split(".")[1])));
 
+    request.headers['Authorization']='Bearer $token';
     request.send().then((response) async {
       http.Response.fromStream(response).then((final_response) {
         setState(() async {
@@ -184,7 +210,9 @@ class _MessageInputState extends State<MessageInput> {
           if (final_response.statusCode == 200) {
             Uri uri = Uri.parse(
                 "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
-            var response = await http.get(uri);
+            var response = await http.get(uri,headers: {
+              'Authorization': 'Bearer $token'
+            });
             ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
           }
         });
@@ -196,12 +224,16 @@ class _MessageInputState extends State<MessageInput> {
     var friend = ctx.read<PersonalMessages>().friend;
     var username = ctx.read<UserDetails>().userdetails['username'];
     var response = await http.post(Uri.parse(
-        "http://${endpoint_with_port}/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"));
+        "http://${endpoint_with_port}/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"),headers: {
+      'Authorization': 'Bearer $token'
+    });
     if (response.statusCode == 200) {
       var username = ctx.read<UserDetails>().userdetails['username'];
       Uri uri = Uri.parse(
           "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
-      var response = await http.get(uri);
+      var response = await http.get(uri,headers: {
+        'Authorization': 'Bearer $token'
+      });
       ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
     }
   }
