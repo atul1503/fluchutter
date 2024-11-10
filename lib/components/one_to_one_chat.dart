@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fluchutter/components/chat.dart';
 import 'package:fluchutter/endpoint.dart';
 import 'package:fluchutter/main.dart';
+import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
@@ -241,7 +242,11 @@ class _MessageInputState extends State<MessageInput> {
   @override
   Widget build(BuildContext context) {
     var screensize = MediaQuery.of(context).size;
-    return Stack(
+    return PopScope(canPop: false,
+        onPopInvoked: (bool didPop) {
+          ctx.read<appNavigation>().setfrontpage("chat");
+        },
+        child: Stack(
       children: [
         Positioned(
             top: screensize.height*0.95,
@@ -282,6 +287,6 @@ class _MessageInputState extends State<MessageInput> {
               onPressed: uploadImage,
             ))
       ],
-    );
+    ));
   }
 }

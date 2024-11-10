@@ -1,6 +1,7 @@
-import 'package:fluchutter/components/chatter.dart';
+import 'package:fluchutter/components/chat.dart';
 import 'package:fluchutter/components/login.dart';
 import 'package:fluchutter/components/new_chat.dart';
+import 'package:fluchutter/components/one_to_one_chat.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/messages.dart';
 import 'package:fluchutter/models/personal_messages.dart';
@@ -34,10 +35,14 @@ class FrontPage extends StatelessWidget {
       if (nav.nav['frontpage'] == 'login/register') {
         return Login();
       } else if (nav.nav['frontpage'] == 'chat') {
-        return Chatter();
+        return Chat();
       } else if (nav.nav['frontpage'] == 'new_chat') {
         return NewChat();
-      } else {
+      }
+      else if (nav.nav['frontpage'] == 'personalChat') {
+          return OneToOneChat();
+      }
+      else {
         return Login();
       }
     }));

@@ -21,6 +21,7 @@ class _LoginState extends State<Login> {
   bool attempted_login=false;
   bool register_status=false;
 
+
   void attempt_login(BuildContext ctx) async {
     final String username=username_controller.text;
     final String password=password_controller.text;
@@ -40,7 +41,6 @@ class _LoginState extends State<Login> {
             await Future.delayed(Duration(seconds: 3));
             ctx.read<UserDetails>().setusername(username);
             ctx.read<appNavigation>().setfrontpage("chat");
-            print("${responseBody['token']}");
             ctx.read<UserDetails>().setToken(responseBody['token']);
 
       }
@@ -55,6 +55,7 @@ class _LoginState extends State<Login> {
     }
     
     );
+    print("in login");
   }
 
   void attempt_signup() {

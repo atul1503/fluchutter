@@ -54,11 +54,13 @@ class _ChatState extends State<Chat> {
     setUsername(ctx.watch<UserDetails>().userdetails['username'] ?? '');
     setToken(token = ctx.watch<UserDetails>().token);
 
+    //print("before get");
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username'),
         headers: {'Authorization': 'Bearer $token'}).then((response) {
       messages = jsonDecode(response.body);
+      print("messages are: $messages");
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
       ctx.read<Messages>().moveMessages(messages);
@@ -75,6 +77,7 @@ class _ChatState extends State<Chat> {
         .then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
       personal_messages.setFriend(friend_username);
+      ctx.read<appNavigation>().setfrontpage("personalChat");
     });
   }
 

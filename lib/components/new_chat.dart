@@ -42,9 +42,12 @@ class _NewChatState extends State<NewChat> {
       ctx.read<PersonalMessages>().setFriend(newFriendUsernameController.text);
       if (data.isEmpty) {
         ctx.read<PersonalMessages>().setmessages([]);
+        ctx.read<appNavigation>().setfrontpage("personalChat");
+        return;
       } else {
         ctx.read<PersonalMessages>().setmessages(data);
       }
+      //print("before changing to chat");
       ctx.read<appNavigation>().setfrontpage('chat');
     });
   }
