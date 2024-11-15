@@ -1,14 +1,15 @@
 import 'dart:convert';
+
 import 'package:fluchutter/endpoint.dart';
-import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/main.dart';
+import 'package:fluchutter/models/app_navigation.dart';
+import 'package:fluchutter/models/messages.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:fluchutter/models/messages.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class Chat extends StatefulWidget {
@@ -18,7 +19,7 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> {
   final BuildContext ctx = navigatorKey.currentContext as BuildContext;
-  String? username,token;
+  String? username, token;
   List<dynamic> messages = [];
   List<Expanded> messageWidgets = [];
   bool get_new_old_flag = true;
@@ -29,15 +30,15 @@ class _ChatState extends State<Chat> {
     });
   }
 
-  void setUsername(String _username){
+  void setUsername(String _username) {
     setState(() {
-      username=_username;
+      username = _username;
     });
   }
 
-  void setToken(String _token){
+  void setToken(String _token) {
     setState(() {
-      token=_token;
+      token = _token;
     });
   }
 
@@ -69,12 +70,10 @@ class _ChatState extends State<Chat> {
 
   void changePersonChat(BuildContext ctx, String friend_username) {
     var personal_messages = ctx.read<PersonalMessages>();
-    http
-        .get(Uri.parse(
-            "http://${endpoint_with_port}/messages/latest?userone=${friend_username}&usertwo=${username}"),headers: {
-          'Authorization': 'Bearer $token'
-    })
-        .then((response) {
+    http.get(
+        Uri.parse(
+            "http://${endpoint_with_port}/messages/latest?userone=${friend_username}&usertwo=${username}"),
+        headers: {'Authorization': 'Bearer $token'}).then((response) {
       personal_messages.setmessages(jsonDecode(response.body));
       personal_messages.setFriend(friend_username);
       ctx.read<appNavigation>().setfrontpage("personalChat");
@@ -92,9 +91,7 @@ class _ChatState extends State<Chat> {
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
-        headers: {
-    'Authorization': 'Bearer $token'
-    }).then((response) {
+        headers: {'Authorization': 'Bearer $token'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
@@ -116,9 +113,7 @@ class _ChatState extends State<Chat> {
     http.get(
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
-        headers: {
-    'Authorization': 'Bearer $token'
-    }).then((response) {
+        headers: {'Authorization': 'Bearer $token'}).then((response) {
       messages = jsonDecode(response.body);
       messages.sort((a, b) => a['time'].compareTo(b['time']));
       setMessages(messages);
@@ -182,23 +177,25 @@ class _ChatState extends State<Chat> {
         Positioned(
             bottom: 0,
             child: MouseRegion(
-                    onEnter: getNew,
-                    onExit: (PointerExitEvent e) {
-                      setState() {
-                        get_new_old_flag = true;
-                      }
-                    },
-                    child: ElevatedButton(onPressed: (){}, child:Icon(Icons.arrow_downward)))),
+                onEnter: getNew,
+                onExit: (PointerExitEvent e) {
+                  setState() {
+                    get_new_old_flag = true;
+                  }
+                },
+                child: ElevatedButton(
+                    onPressed: () {}, child: Icon(Icons.arrow_downward)))),
         Positioned(
             top: 0,
             child: MouseRegion(
-                    onEnter: getOld,
-                    onExit: (PointerExitEvent e) {
-                      setState() {
-                        get_new_old_flag = true;
-                      }
-                    },
-                    child: ElevatedButton(onPressed: (){}, child: Icon(Icons.arrow_upward))))
+                onEnter: getOld,
+                onExit: (PointerExitEvent e) {
+                  setState() {
+                    get_new_old_flag = true;
+                  }
+                },
+                child: ElevatedButton(
+                    onPressed: () {}, child: Icon(Icons.arrow_upward))))
       ],
     );
   }
@@ -221,7 +218,7 @@ class Message extends StatefulWidget {
 class _MessageState extends State<Message> {
   String messageid = "";
   String username = "";
-  String token="";
+  String token = "";
   bool preview = false;
   bool chatroot = false;
   Map<String, dynamic> message = {};
@@ -262,7 +259,7 @@ class _MessageState extends State<Message> {
     BuildContext ctx = navigatorKey.currentContext as BuildContext;
     setusername(ctx.watch<UserDetails>().userdetails['username'] as String);
     setState(() {
-      token=ctx.watch<UserDetails>().token;
+      token = ctx.watch<UserDetails>().token;
     });
     List<dynamic> messages = ctx.watch<Messages>().messages;
     List<dynamic> personal_messages =
@@ -279,12 +276,10 @@ class _MessageState extends State<Message> {
     }
 
     if (message['msgcontent']['type'] != 'text') {
-      http
-          .get(Uri.parse(
-              'http://${endpoint_with_port}/messages/image?image_name=${message['msgcontent']['photourl']}'),headers: {
-        'Authorization': 'Bearer $token'
-      })
-          .then((response) {
+      http.get(
+          Uri.parse(
+              'http://${endpoint_with_port}/messages/image?image_name=${message['msgcontent']['photourl']}'),
+          headers: {'Authorization': 'Bearer $token'}).then((response) {
         if (mounted) {
           setState(() {
             photobytes = response.bodyBytes;

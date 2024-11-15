@@ -8,10 +8,10 @@ import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class OneToOneChat extends StatefulWidget {
   @override
@@ -20,75 +20,129 @@ class OneToOneChat extends StatefulWidget {
 
 class OneToOneChatState extends State<OneToOneChat> {
   final BuildContext ctx = navigatorKey.currentContext as BuildContext;
-  bool get_new_old_flag=true;
-  String token="";
-
+  String token = "";
 
   @override
   void initState() {
     setState(() {
-      token=ctx.watch<UserDetails>().token;
+      token = ctx.watch<UserDetails>().token;
     });
+
     super.initState();
   }
 
-  void getOld(PointerEnterEvent e){
-    List<dynamic> messages=ctx.read<PersonalMessages>().personal_messages;
-    if(!get_new_old_flag){
-      return;
-    }
-    if(messages.length<1){
-      return;
-    }
+  void getOld() {
+    List<dynamic> messages = ctx.read<PersonalMessages>().personal_messages;
     var friend = ctx.read<PersonalMessages>().friend;
-    var username=ctx.read<UserDetails>().userdetails['username'];
+    var username = ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
-                "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
-            http.get(uri,headers: {
-              'Authorization': 'Bearer $token'
-            }).then((response){
-                ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
-                setState(() {
-                  get_new_old_flag=false;
-                });
-            });
-
+        "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
+    http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
+      var responseMessages = jsonDecode(response.body);
+      if (responseMessages.length == 1) {
+        getNew();
+        return;
+      }
+      ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+    });
   }
 
-  void getNew(PointerEnterEvent e){
-    List<dynamic> messages=ctx.read<PersonalMessages>().personal_messages;
-    if(!get_new_old_flag){
-      return;
-    }
-    if(messages.length<1){
-      return;
-    }
+  void getNew() {
+    List<dynamic> messages = ctx.read<PersonalMessages>().personal_messages;
     var friend = ctx.read<PersonalMessages>().friend;
-    var username=ctx.read<UserDetails>().userdetails['username'];
+    var username = ctx.read<UserDetails>().userdetails['username'];
     Uri uri = Uri.parse(
-                "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length-1]['time']}");
-            http.get(uri,headers: {
-              'Authorization': 'Bearer $token'
-            }).then((response){
-                ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
-                setState(() {
-                  get_new_old_flag=false;
-                });
-            });
-
+        "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length - 1]['time']}");
+    http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
+      var responseMessages = jsonDecode(response.body);
+      if (responseMessages.length == 1) {
+        getOld();
+        return;
+      }
+      ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+    });
   }
 
   @override
+  Widget build(BuildContext ctx) {
+    var screensize = MediaQuery.of(context).size;
+    List<dynamic> messages =
+        context.watch<PersonalMessages>().personal_messages;
+    String friend = context.watch<PersonalMessages>().friend;
+
+    messages
+        .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
+    return Stack(children: [
+      Flex(direction: Axis.vertical, children: [
+        Flexible(
+            flex: 2,
+            fit: FlexFit.tight,
+            child: Center(
+                child: Text(friend,
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25)))),
+        Flexible(
+            flex: 7,
+            fit: FlexFit.tight,
+            child: ListView.builder(
+              padding: EdgeInsets.only(bottom: 100),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                var message = messages[index];
+                return InkWell(
+                    onTap: () {
+                      if (index == 0) {
+                        getOld();
+                      } else if (index == messages.length - 1) {
+                        getNew();
+                      }
+                    },
+                    child: ListTile(
+                      title: Message(
+                        key: ValueKey(message['messageId'].toString()),
+                        messageId: message['messageId'].toString(),
+                        preview: false,
+                        chatroot: false,
+                      ),
+                    ));
+              },
+            )),
+        Flexible(flex: 1, child: MessageInput())
+      ]),
+      Positioned(
+          top: screensize.height * 0.1,
+          left: screensize.height * 0.01,
+          child: MouseRegion(
+              onExit: (PointerExitEvent e) {},
+              child: ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.arrow_upward),
+              ))),
+      Positioned(
+          bottom: screensize.height * 0.1,
+          left: screensize.width * 0.01,
+          child: MouseRegion(
+              onExit: (PointerExitEvent e) {},
+              child: ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.arrow_downward),
+              ))),
+    ]);
+  }
+
+  /*
+  @override
   Widget build(BuildContext context) {
     var screensize = MediaQuery.of(context).size;
-    List<dynamic> messages=context.watch<PersonalMessages>().personal_messages;
-    String friend=context.watch<PersonalMessages>().friend;
+    List<dynamic> messages =
+        context.watch<PersonalMessages>().personal_messages;
+    String friend = context.watch<PersonalMessages>().friend;
 
     messages
         .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
     return Stack(children: [
       SizedBox(
-        height: screensize.height*0.1,
+        height: screensize.height * 0.1,
       ),
       ListView.builder(
         padding: EdgeInsets.only(bottom: 100),
@@ -96,7 +150,7 @@ class OneToOneChatState extends State<OneToOneChat> {
         itemBuilder: (context, index) {
           var message = messages[index];
           return ListTile(
-            title:Message(
+            title: Message(
               key: ValueKey(message['messageId'].toString()),
               messageId: message['messageId'].toString(),
               preview: false,
@@ -105,23 +159,46 @@ class OneToOneChatState extends State<OneToOneChat> {
           );
         },
       ),
-      SizedBox(height: screensize.height*0.1,),
+      //SizedBox(height: screensize.height*0.1,),
       Positioned(child: MessageInput()),
       Positioned(
-        child: Container(
-          color: Colors.white,
-          height: screensize.height*0.05,
-          width: screensize.width*0.7,
-          child: Center(child: Text(friend,style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 25))))),
-      Positioned(top: screensize.height*0.1 , child: MouseRegion(onEnter: getOld,onExit: (PointerExitEvent e){ setState(() {
-        get_new_old_flag=true;
-      });}, child: ElevatedButton(onPressed: (){},child: Icon(Icons.arrow_upward),))),
-      Positioned(bottom: screensize.height*0.1 ,child: MouseRegion(onEnter: getNew,onExit: (PointerExitEvent e){ setState(() {
-        get_new_old_flag=true;
-      });}, child: ElevatedButton(onPressed: (){},child: Icon(Icons.arrow_downward),)))      
+          child: Container(
+              color: Colors.white,
+              height: screensize.height * 0.05,
+              width: screensize.width * 0.7,
+              child: Center(
+                  child: Text(friend,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 25))))),
+      Positioned(
+          top: screensize.height * 0.1,
+          child: MouseRegion(
+              onEnter: getOld,
+              onExit: (PointerExitEvent e) {
+                setState(() {
+                  get_new_old_flag = true;
+                });
+              },
+              child: ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.arrow_upward),
+              ))),
+      Positioned(
+          bottom: screensize.height * 0.1,
+          child: MouseRegion(
+              onEnter: getNew,
+              onExit: (PointerExitEvent e) {
+                setState(() {
+                  get_new_old_flag = true;
+                });
+              },
+              child: ElevatedButton(
+                onPressed: () {},
+                child: Icon(Icons.arrow_downward),
+              )))
     ]);
   }
+   */
 }
 
 class MessageInput extends StatefulWidget {
@@ -132,17 +209,15 @@ class _MessageInputState extends State<MessageInput> {
   XFile? image;
   String image_name = "";
   ImagePicker picker = ImagePicker();
-  String token="";
+  String token = "";
   String upload_response = "";
   TextEditingController messageController = TextEditingController();
   final BuildContext ctx = navigatorKey.currentContext as BuildContext;
 
-
   @override
   void initState() {
-
     setState(() {
-      token=ctx.watch<UserDetails>().token;
+      token = ctx.watch<UserDetails>().token;
     });
     super.initState();
   }
@@ -189,7 +264,7 @@ class _MessageInputState extends State<MessageInput> {
         filename: image_name,
         contentType: MediaType('image', image_name.split(".")[1])));
 
-    request.headers['Authorization']='Bearer $token';
+    request.headers['Authorization'] = 'Bearer $token';
     request.send().then((response) async {
       http.Response.fromStream(response).then((final_response) {
         setState(() async {
@@ -211,9 +286,8 @@ class _MessageInputState extends State<MessageInput> {
           if (final_response.statusCode == 200) {
             Uri uri = Uri.parse(
                 "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
-            var response = await http.get(uri,headers: {
-              'Authorization': 'Bearer $token'
-            });
+            var response = await http
+                .get(uri, headers: {'Authorization': 'Bearer $token'});
             ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
           }
         });
@@ -224,17 +298,16 @@ class _MessageInputState extends State<MessageInput> {
   void sendMessage(BuildContext ctx) async {
     var friend = ctx.read<PersonalMessages>().friend;
     var username = ctx.read<UserDetails>().userdetails['username'];
-    var response = await http.post(Uri.parse(
-        "http://${endpoint_with_port}/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"),headers: {
-      'Authorization': 'Bearer $token'
-    });
+    var response = await http.post(
+        Uri.parse(
+            "http://${endpoint_with_port}/messages/createSimple?text=${messageController.text}&senderid=${username}&recid=${friend}"),
+        headers: {'Authorization': 'Bearer $token'});
     if (response.statusCode == 200) {
       var username = ctx.read<UserDetails>().userdetails['username'];
       Uri uri = Uri.parse(
           "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}");
-      var response = await http.get(uri,headers: {
-        'Authorization': 'Bearer $token'
-      });
+      var response =
+          await http.get(uri, headers: {'Authorization': 'Bearer $token'});
       ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
     }
   }
@@ -242,51 +315,54 @@ class _MessageInputState extends State<MessageInput> {
   @override
   Widget build(BuildContext context) {
     var screensize = MediaQuery.of(context).size;
-    return PopScope(canPop: false,
-        onPopInvoked: (bool didPop) {
-          ctx.read<appNavigation>().setfrontpage("chat");
-        },
-        child: Stack(
-      children: [
-        Positioned(
-            top: screensize.height*0.95,
-            child: Container(
-              width: screensize.width*0.7,
-              height: screensize.height*0.1,
-              color: Colors.white,
-
-            )),
-        Positioned(
-            width: screensize.width * 0.6,
-            bottom: 0,
-            child: TextField(
-              decoration: InputDecoration(labelText: "Type your message"),
-              controller: messageController,
-            )),
-        Positioned(
-            bottom: 0,
-            right: screensize.width * 0.3,
-            child: ElevatedButton(
-                onPressed: () {
-                  pickImage(context);
-                },
-                child: Text("pick image"))),
-        Positioned(
-            bottom: 0,
-            right: screensize.width * 0.15,
-            child: ElevatedButton(
-                onPressed: () {
-                  sendMessage(context);
-                },
-                child: Text("Send"))),
-        Positioned(
-            bottom: 0,
-            right: screensize.width * 0,
-            child: ElevatedButton(
-              child: Text("Upload it"),
-              onPressed: uploadImage,
-            ))
-      ],
-    ));
+    return Container(
+        color: Colors.white,
+        child: PopScope(
+            canPop: false,
+            onPopInvoked: (bool didPop) {
+              ctx.read<appNavigation>().setfrontpage("chat");
+            },
+            child: Stack(
+              children: [
+                Positioned(
+                    top: screensize.height * 0.95,
+                    child: Container(
+                      width: screensize.width * 0.7,
+                      height: screensize.height * 0.1,
+                      color: Colors.white,
+                    )),
+                Positioned(
+                    width: screensize.width * 0.6,
+                    bottom: 0,
+                    child: TextField(
+                      decoration:
+                          InputDecoration(labelText: "Type your message"),
+                      controller: messageController,
+                    )),
+                Positioned(
+                    bottom: 0,
+                    right: screensize.width * 0.3,
+                    child: ElevatedButton(
+                        onPressed: () {
+                          pickImage(context);
+                        },
+                        child: Text("pick image"))),
+                Positioned(
+                    bottom: 0,
+                    right: screensize.width * 0.15,
+                    child: ElevatedButton(
+                        onPressed: () {
+                          sendMessage(context);
+                        },
+                        child: Text("Send"))),
+                Positioned(
+                    bottom: 0,
+                    right: screensize.width * 0,
+                    child: ElevatedButton(
+                      child: Text("Upload it"),
+                      onPressed: uploadImage,
+                    ))
+              ],
+            )));
   }
 }

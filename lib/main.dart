@@ -5,9 +5,9 @@ import 'package:fluchutter/components/one_to_one_chat.dart';
 import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/messages.dart';
 import 'package:fluchutter/models/personal_messages.dart';
+import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fluchutter/models/user_details.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -38,11 +38,9 @@ class FrontPage extends StatelessWidget {
         return Chat();
       } else if (nav.nav['frontpage'] == 'new_chat') {
         return NewChat();
-      }
-      else if (nav.nav['frontpage'] == 'personalChat') {
-          return OneToOneChat();
-      }
-      else {
+      } else if (nav.nav['frontpage'] == 'personalChat') {
+        return OneToOneChat();
+      } else {
         return Login();
       }
     }));
