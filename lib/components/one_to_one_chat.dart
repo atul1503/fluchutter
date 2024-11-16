@@ -7,7 +7,6 @@ import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
@@ -39,7 +38,7 @@ class OneToOneChatState extends State<OneToOneChat> {
         "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
     http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
       var responseMessages = jsonDecode(response.body);
-      if (responseMessages.length == 1) {
+      if (responseMessages.length == 1 && messages.length == 1) {
         getNew();
         return;
       }
@@ -55,7 +54,7 @@ class OneToOneChatState extends State<OneToOneChat> {
         "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length - 1]['time']}");
     http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
       var responseMessages = jsonDecode(response.body);
-      if (responseMessages.length == 1) {
+      if (responseMessages.length == 1 && messages.length == 1) {
         getOld();
         return;
       }
@@ -108,97 +107,9 @@ class OneToOneChatState extends State<OneToOneChat> {
               },
             )),
         Flexible(flex: 1, child: MessageInput())
-      ]),
-      Positioned(
-          top: screensize.height * 0.1,
-          left: screensize.height * 0.01,
-          child: MouseRegion(
-              onExit: (PointerExitEvent e) {},
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Icon(Icons.arrow_upward),
-              ))),
-      Positioned(
-          bottom: screensize.height * 0.1,
-          left: screensize.width * 0.01,
-          child: MouseRegion(
-              onExit: (PointerExitEvent e) {},
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Icon(Icons.arrow_downward),
-              ))),
+      ])
     ]);
   }
-
-  /*
-  @override
-  Widget build(BuildContext context) {
-    var screensize = MediaQuery.of(context).size;
-    List<dynamic> messages =
-        context.watch<PersonalMessages>().personal_messages;
-    String friend = context.watch<PersonalMessages>().friend;
-
-    messages
-        .sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
-    return Stack(children: [
-      SizedBox(
-        height: screensize.height * 0.1,
-      ),
-      ListView.builder(
-        padding: EdgeInsets.only(bottom: 100),
-        itemCount: messages.length,
-        itemBuilder: (context, index) {
-          var message = messages[index];
-          return ListTile(
-            title: Message(
-              key: ValueKey(message['messageId'].toString()),
-              messageId: message['messageId'].toString(),
-              preview: false,
-              chatroot: false,
-            ),
-          );
-        },
-      ),
-      //SizedBox(height: screensize.height*0.1,),
-      Positioned(child: MessageInput()),
-      Positioned(
-          child: Container(
-              color: Colors.white,
-              height: screensize.height * 0.05,
-              width: screensize.width * 0.7,
-              child: Center(
-                  child: Text(friend,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 25))))),
-      Positioned(
-          top: screensize.height * 0.1,
-          child: MouseRegion(
-              onEnter: getOld,
-              onExit: (PointerExitEvent e) {
-                setState(() {
-                  get_new_old_flag = true;
-                });
-              },
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Icon(Icons.arrow_upward),
-              ))),
-      Positioned(
-          bottom: screensize.height * 0.1,
-          child: MouseRegion(
-              onEnter: getNew,
-              onExit: (PointerExitEvent e) {
-                setState(() {
-                  get_new_old_flag = true;
-                });
-              },
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Icon(Icons.arrow_downward),
-              )))
-    ]);
-  }
-   */
 }
 
 class MessageInput extends StatefulWidget {
@@ -296,6 +207,13 @@ class _MessageInputState extends State<MessageInput> {
   }
 
   void sendMessage(BuildContext ctx) async {
+    if (image != null) {
+      uploadImage();
+      setState(() {
+        image = null;
+      });
+      return;
+    }
     var friend = ctx.read<PersonalMessages>().friend;
     var username = ctx.read<UserDetails>().userdetails['username'];
     var response = await http.post(
@@ -346,7 +264,7 @@ class _MessageInputState extends State<MessageInput> {
                         onPressed: () {
                           pickImage(context);
                         },
-                        child: Text("pick image"))),
+                        child: Icon(Icons.image))),
                 Positioned(
                     bottom: 0,
                     right: screensize.width * 0.15,
@@ -354,14 +272,7 @@ class _MessageInputState extends State<MessageInput> {
                         onPressed: () {
                           sendMessage(context);
                         },
-                        child: Text("Send"))),
-                Positioned(
-                    bottom: 0,
-                    right: screensize.width * 0,
-                    child: ElevatedButton(
-                      child: Text("Upload it"),
-                      onPressed: uploadImage,
-                    ))
+                        child: Icon(Icons.send)))
               ],
             )));
   }
