@@ -7,6 +7,7 @@ import 'package:fluchutter/models/app_navigation.dart';
 import 'package:fluchutter/models/personal_messages.dart';
 import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/material.dart';
+import 'package:focus_detector/focus_detector.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,12 +38,16 @@ class OneToOneChatState extends State<OneToOneChat> {
     Uri uri = Uri.parse(
         "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&afterDate=${messages[0]['time']}");
     http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
-      var responseMessages = jsonDecode(response.body);
-      if (responseMessages.length == 1 && messages.length == 1) {
-        getNew();
-        return;
-      }
-      ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+      List _new_messages = jsonDecode(response.body) as List;
+      List new_messages = _new_messages.where((msg) {
+        for (int i = 0; i < messages.length; i++) {
+          if (messages[i]['messageId'] == msg["messageId"]) {
+            return false;
+          }
+        }
+        return true;
+      }).toList();
+      ctx.read<PersonalMessages>().setmessages(messages + new_messages);
     });
   }
 
@@ -53,12 +58,20 @@ class OneToOneChatState extends State<OneToOneChat> {
     Uri uri = Uri.parse(
         "http://${endpoint_with_port}/messages/latest?userone=${friend}&usertwo=${username}&beforeDate=${messages[messages.length - 1]['time']}");
     http.get(uri, headers: {'Authorization': 'Bearer $token'}).then((response) {
-      var responseMessages = jsonDecode(response.body);
-      if (responseMessages.length == 1 && messages.length == 1) {
-        getOld();
+      var _new_messages = jsonDecode(response.body) as List;
+      if (_new_messages.length == 1) {
         return;
       }
-      ctx.read<PersonalMessages>().setmessages(jsonDecode(response.body));
+
+      List new_messages = _new_messages.where((msg) {
+        for (int i = 0; i < messages.length; i++) {
+          if (messages[i]['messageId'] == msg["messageId"]) {
+            return false;
+          }
+        }
+        return true;
+      }).toList();
+      ctx.read<PersonalMessages>().setmessages(messages + new_messages);
     });
   }
 
@@ -88,22 +101,22 @@ class OneToOneChatState extends State<OneToOneChat> {
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 var message = messages[index];
-                return InkWell(
-                    onTap: () {
+                return FocusDetector(
+                    onVisibilityGained: () {
                       if (index == 0) {
                         getOld();
-                      } else if (index == messages.length - 1) {
+                      }
+                      if (index == messages.length - 1) {
                         getNew();
                       }
                     },
                     child: ListTile(
-                      title: Message(
-                        key: ValueKey(message['messageId'].toString()),
-                        messageId: message['messageId'].toString(),
-                        preview: false,
-                        chatroot: false,
-                      ),
-                    ));
+                        title: Message(
+                      key: ValueKey(message['messageId'].toString()),
+                      messageId: message['messageId'].toString(),
+                      preview: false,
+                      chatroot: false,
+                    )));
               },
             )),
         Flexible(flex: 1, child: MessageInput())

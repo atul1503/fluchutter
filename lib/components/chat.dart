@@ -9,6 +9,7 @@ import 'package:fluchutter/models/user_details.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:focus_detector/focus_detector.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
@@ -68,6 +69,17 @@ class _ChatState extends State<Chat> {
     });
   }
 
+  List returnOnlyUniqueMessages(List old_messages, List new_messages) {
+    return new_messages.where((msg) {
+      for (int i = 0; i < old_messages.length; i++) {
+        if (old_messages[i]['messageId'] == msg['messageId']) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
   void changePersonChat(BuildContext ctx, String friend_username) {
     var personal_messages = ctx.read<PersonalMessages>();
     http.get(
@@ -80,10 +92,7 @@ class _ChatState extends State<Chat> {
     });
   }
 
-  void getOld(PointerEnterEvent) {
-    if (!get_new_old_flag) {
-      return;
-    }
+  void getOld() {
     if (messages.length < 1) {
       return;
     }
@@ -92,20 +101,14 @@ class _ChatState extends State<Chat> {
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&afterDate=${messages[0]['time']}'),
         headers: {'Authorization': 'Bearer $token'}).then((response) {
-      messages = jsonDecode(response.body);
-      messages.sort((a, b) => a['time'].compareTo(b['time']));
-      setMessages(messages);
-      ctx.read<Messages>().moveMessages(messages);
-      setState() {
-        get_new_old_flag = false;
-      }
+      var new_messages = jsonDecode(response.body) as List;
+      List filteredMessages = returnOnlyUniqueMessages(messages, new_messages);
+      setMessages(filteredMessages + messages);
+      ctx.read<Messages>().moveMessages(filteredMessages + messages);
     });
   }
 
-  void getNew(PointerEnterEvent e) {
-    if (!get_new_old_flag) {
-      return;
-    }
+  void getNew() {
     if (messages.length < 1) {
       return;
     }
@@ -114,13 +117,10 @@ class _ChatState extends State<Chat> {
         Uri.parse(
             'http://${endpoint_with_port}/messages/getlatestfromfriends?username=$username&beforeDate=${messages[messages.length - 1]['time']}'),
         headers: {'Authorization': 'Bearer $token'}).then((response) {
-      messages = jsonDecode(response.body);
-      messages.sort((a, b) => a['time'].compareTo(b['time']));
-      setMessages(messages);
-      ctx.read<Messages>().moveMessages(messages);
-      setState() {
-        get_new_old_flag = false;
-      }
+      List new_messages = jsonDecode(response.body);
+      List filteredMessages = returnOnlyUniqueMessages(messages, new_messages);
+      setMessages(messages + filteredMessages);
+      ctx.read<Messages>().moveMessages(messages + filteredMessages);
     });
   }
 
@@ -128,6 +128,8 @@ class _ChatState extends State<Chat> {
   Widget build(BuildContext context) {
     String? username = context.watch<UserDetails>().userdetails['username'];
     var screensize = MediaQuery.of(context).size;
+
+    messages.sort((a, b) => a['time'].compareTo(b['time']));
 
     return Stack(
       children: [
@@ -141,16 +143,25 @@ class _ChatState extends State<Chat> {
             } else {
               friend = messages[index]['sender']['username'];
             }
-            return ListTile(
-              title: InkWell(
-                onTap: () => changePersonChat(context, friend),
-                child: Message(
-                    chatroot: true,
-                    key: ValueKey(item['messageId'].toString()),
-                    messageId: item['messageId'].toString(),
-                    preview: true),
-              ),
-            );
+
+            return FocusDetector(
+                onVisibilityGained: () {
+                  if (index == 0) {
+                    getOld();
+                  }
+                  if (index == messages.length - 1) {
+                    getNew();
+                  }
+                },
+                child: InkWell(
+                    onTap: () {
+                      changePersonChat(ctx, friend);
+                    },
+                    child: Message(
+                        chatroot: true,
+                        key: ValueKey(item['messageId'].toString()),
+                        messageId: item['messageId'].toString(),
+                        preview: true)));
           },
         ),
         Positioned(
@@ -174,28 +185,6 @@ class _ChatState extends State<Chat> {
                   context.read<UserDetails>().setusername('');
                 },
                 child: Icon(Icons.logout))),
-        Positioned(
-            bottom: 0,
-            child: MouseRegion(
-                onEnter: getNew,
-                onExit: (PointerExitEvent e) {
-                  setState() {
-                    get_new_old_flag = true;
-                  }
-                },
-                child: ElevatedButton(
-                    onPressed: () {}, child: Icon(Icons.arrow_downward)))),
-        Positioned(
-            top: 0,
-            child: MouseRegion(
-                onEnter: getOld,
-                onExit: (PointerExitEvent e) {
-                  setState() {
-                    get_new_old_flag = true;
-                  }
-                },
-                child: ElevatedButton(
-                    onPressed: () {}, child: Icon(Icons.arrow_upward))))
       ],
     );
   }
